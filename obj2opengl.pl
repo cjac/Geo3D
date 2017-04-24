@@ -377,7 +377,7 @@ sub loadData {
 		$numFaces++;
 
 		# ractangle => second triangle
-		if($5 != "")
+		if(defined $5 && $5 != "")
 		{
 			@d = split('/', $5);
 			$va_idx[$numFaces] = $a[0]-1;
