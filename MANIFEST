@@ -1,0 +1,15 @@
+Changes
+lib/Geo3D/Asset/Export.pm
+lib/Geo3D/Asset/Import.pm
+lib/Geo3D/Bezier/Patch.pm
+lib/Geo3D/Polygon.pm
+lib/Geo3D/Surface.pm
+lib/Geo3D/Surface/Normal.pm
+lib/Geo3D/Vertex.pm
+Makefile.PL
+MANIFEST			This list of files
+README
+t/00-load.t
+t/manifest.t
+t/pod-coverage.t
+t/pod.t
