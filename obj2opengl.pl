@@ -2,7 +2,7 @@
 =head1 NAME
 
  obj2opengl - converts obj files to arrays for glDrawArrays
- 
+
 =head1 SYNOPSIS
 
  obj2opengl [options] file
@@ -47,7 +47,7 @@ This script is based on the work of Margaret Geroch.
 
 =head1 REQUIRED ARGUMENTS
 
-The first or the last argument has to be an OBJ file according 
+The first or the last argument has to be an OBJ file according
 to this () specification.
 
 =head1 OPTIONS
@@ -62,7 +62,7 @@ Print a brief help message and exits.
 
 Prints the extended manual page and exits.
 
-=item B<-noScale>    
+=item B<-noScale>
 
 Prevents automatic scaling. Otherwise the object will be scaled
 such the the longest dimension is 1 unit.
@@ -84,13 +84,13 @@ input filename but with the extension .h
 
 =item B<-nameOfObject>
 
-Specifies the name of the generated variables. If omitted, same as 
+Specifies the name of the generated variables. If omitted, same as
 output filename without path and extension.
 
 =item B<-noverbose>
 
 Runs this script silently.
-   
+
 =cut
 
 use Getopt::Long;
@@ -142,21 +142,21 @@ sub handleArguments() {
 		"nameOfObject=s" => \$object,
 		"verbose!" => \$verbose,
 		);
-	
+
 	if($noscale) {
 		$scalefac = 1;
 	}
-	
+
 	if($nomove) {
 		@center = (0, 0, 0);
 	}
-	
+
 	if(defined(@center)) {
 		$xcen = $center[0];
 		$ycen = $center[1];
 		$zcen = $center[2];
 	}
-	
+
 	if($#ARGV == 0) {
 		my ($file, $dir, $ext) = fileparse($ARGV[0], qr/\.[^.]*/);
 		$inFilename = $dir . $file . $ext;
@@ -169,25 +169,25 @@ sub handleArguments() {
 		my ($file, $dir, $ext) = fileparse($inFilename, qr/\.[^.]*/);
 		$outFilename = $dir . $file . ".h";
 	}
-	
+
 	# (optional) define object name from output filename
 	unless($errorInOptions || defined($object)) {
 		my ($file, $dir, $ext) = fileparse($outFilename, qr/\.[^.]*/);
 	  	$object = $file;
 	}
-	
+
 	($inFilename ne $outFilename) or
 		die ("Input filename must not be the same as output filename")
 		unless($errorInOptions);
-		
+
 	if($errorInOptions || $man || $help) {
 		pod2usage(-verbose => 2) if $man;
 		pod2usage(-verbose => 1) if $help;
-		pod2usage(); 
+		pod2usage();
 	}
-	
+
 	# check wheter file exists
-	open ( INFILE, "<$inFilename" ) 
+	open ( INFILE, "<$inFilename" )
 	  || die "Can't find file '$inFilename' ...exiting \n";
 	close(INFILE);
 }
@@ -196,31 +196,31 @@ sub handleArguments() {
 # and calculates scaling factor $scalefac to limit max
 #   side of object to 1.0 units
 sub calcSizeAndCenter() {
-	open ( INFILE, "<$inFilename" ) 
+	open ( INFILE, "<$inFilename" )
 	  || die "Can't find file $inFilename...exiting \n";
 
 	$numVerts = 0;
-	
+
 	my (
-		$xsum, $ysum, $zsum, 
+		$xsum, $ysum, $zsum,
 		$xmin, $ymin, $zmin,
 		$xmax, $ymax, $zmax,
 		);
 
-	while ( $line = <INFILE> ) 
+	while ( $line = <INFILE> )
 	{
 	  chop $line;
-	  
+
 	  if ($line =~ /v\s+.*/)
 	  {
-	  
+
 	    $numVerts++;
 	    @tokens = split(' ', $line);
-	    
+
 	    $xsum += $tokens[1];
 	    $ysum += $tokens[2];
 	    $zsum += $tokens[3];
-	    
+
 	    if ( $numVerts == 1 )
 	    {
 	      $xmin = $tokens[1];
@@ -231,7 +231,7 @@ sub calcSizeAndCenter() {
 	      $zmax = $tokens[3];
 	    }
 	    else
-	    {   
+	    {
 	        if ($tokens[1] < $xmin)
 	      {
 	        $xmin = $tokens[1];
@@ -240,54 +240,54 @@ sub calcSizeAndCenter() {
 	      {
 	        $xmax = $tokens[1];
 	      }
-	    
-	      if ($tokens[2] < $ymin) 
+
+	      if ($tokens[2] < $ymin)
 	      {
 	        $ymin = $tokens[2];
 	      }
-	      elsif ($tokens[2] > $ymax) 
+	      elsif ($tokens[2] > $ymax)
 	      {
 	        $ymax = $tokens[2];
 	      }
-	    
-	      if ($tokens[3] < $zmin) 
+
+	      if ($tokens[3] < $zmin)
 	      {
 	        $zmin = $tokens[3];
 	      }
-	      elsif ($tokens[3] > $zmax) 
+	      elsif ($tokens[3] > $zmax)
 	      {
 	        $zmax = $tokens[3];
 	      }
-	    
+
 	    }
-	 
+
 	  }
-	 
+
 	}
 	close INFILE;
-	
+
 	#  Calculate the center
 	unless(defined($xcen)) {
 		$xcen = $xsum / $numVerts;
 		$ycen = $ysum / $numVerts;
 		$zcen = $zsum / $numVerts;
 	}
-	
+
 	#  Calculate the scale factor
 	unless(defined($scalefac)) {
 		my $xdiff = ($xmax - $xmin);
 		my $ydiff = ($ymax - $ymin);
 		my $zdiff = ($zmax - $zmin);
-		
-		if ( ( $xdiff >= $ydiff ) && ( $xdiff >= $zdiff ) ) 
+
+		if ( ( $xdiff >= $ydiff ) && ( $xdiff >= $zdiff ) )
 		{
 		  $scalefac = $xdiff;
 		}
-		elsif ( ( $ydiff >= $xdiff ) && ( $ydiff >= $zdiff ) ) 
+		elsif ( ( $ydiff >= $xdiff ) && ( $ydiff >= $zdiff ) )
 		{
 		  $scalefac = $ydiff;
 		}
-		else 
+		else
 		{
 		  $scalefac = $zdiff;
 		}
@@ -314,7 +314,7 @@ sub printStatistics() {
 # reads vertices into $xcoords[], $ycoords[], $zcoords[]
 #   where coordinates are moved and scaled according to
 #   $xcen, $ycen, $zcen and $scalefac
-# reads texture coords into $tx[], $ty[] 
+# reads texture coords into $tx[], $ty[]
 #   where y coordinate is mirrowed
 # reads normals into $nx[], $ny[], $nz[]
 #   but does not normalize, see normalizeNormals()
@@ -329,28 +329,28 @@ sub loadData {
 	$numFaces = 0;
 	$numTexture = 0;
 	$numNormals = 0;
-	
+
 	open ( INFILE, "<$inFilename" )
 	  || die "Can't find file $inFilename...exiting \n";
-	
-	while ($line = <INFILE>) 
+
+	while ($line = <INFILE>)
 	{
 	  chop $line;
-	  
+
 	  # vertices
 	  if ($line =~ /v\s+.*/)
 	  {
 	    @tokens= split(' ', $line);
 	    $x = ( $tokens[1] - $xcen ) * $scalefac;
 	    $y = ( $tokens[2] - $ycen ) * $scalefac;
-	    $z = ( $tokens[3] - $zcen ) * $scalefac;    
-	    $xcoords[$numVerts] = $x; 
+	    $z = ( $tokens[3] - $zcen ) * $scalefac;
+	    $xcoords[$numVerts] = $x;
 	    $ycoords[$numVerts] = $y;
 	    $zcoords[$numVerts] = $z;
-	
+
 	    $numVerts++;
 	  }
-	  
+
 	  # texture coords
 	  if ($line =~ /vt\s+.*/)
 	  {
@@ -359,10 +359,10 @@ sub loadData {
 	    $y = 1 - $tokens[2];
 	    $tx[$numTexture] = $x;
 	    $ty[$numTexture] = $y;
-	    
+
 	    $numTexture++;
 	  }
-	  
+
 	  #normals
 	  if ($line =~ /vn\s+.*/)
 	  {
@@ -370,15 +370,15 @@ sub loadData {
 	    $x = $tokens[1];
 	    $y = $tokens[2];
 	    $z = $tokens[3];
-	    $nx[$numNormals] = $x; 
+	    $nx[$numNormals] = $x;
 	    $ny[$numNormals] = $y;
 	    $nz[$numNormals] = $z;
-	
+
 	    $numNormals++;
 	  }
-	  
+
 	  # faces
-	  if ($line =~ /f\s+([^ ]+)\s+([^ ]+)\s+([^ ]+)(\s+([^ ]+))?/) 
+	  if ($line =~ /f\s+([^ ]+)\s+([^ ]+)\s+([^ ]+)(\s+([^ ]+))?/)
 	  {
 	  	@a = split('/', $1);
 	  	@b = split('/', $2);
@@ -386,19 +386,19 @@ sub loadData {
 	  	$va_idx[$numFaces] = $a[0]-1;
 	  	$ta_idx[$numFaces] = $a[1]-1;
 	  	$na_idx[$numFaces] = $a[2]-1;
-	
+
 	  	$vb_idx[$numFaces] = $b[0]-1;
 	  	$tb_idx[$numFaces] = $b[1]-1;
 	  	$nb_idx[$numFaces] = $b[2]-1;
-	
+
 	  	$vc_idx[$numFaces] = $c[0]-1;
 	  	$tc_idx[$numFaces] = $c[1]-1;
 	  	$nc_idx[$numFaces] = $c[2]-1;
-	  	
+	  
 	  	$face_line[$numFaces] = $line;
-	  	
+	  
 		$numFaces++;
-		
+
 		# ractangle => second triangle
 		if($5 != "")
 		{
@@ -419,18 +419,18 @@ sub loadData {
 
 			$numFaces++;
 		}
-		
-	  }  
+
+	  }
 	}
-	
+
 	close INFILE;
 }
 
 sub normalizeNormals {
-	for ( $j = 0; $j < $numNormals; ++$j) 
+	for ( $j = 0; $j < $numNormals; ++$j)
 	{
 	 $d = sqrt ( $nx[$j]*$nx[$j] + $ny[$j]*$ny[$j] + $nz[$j]*$nz[$j] );
-	  
+
 	  if ( $d == 0 )
 	  {
 	    $nx[$j] = 1;
@@ -443,7 +443,7 @@ sub normalizeNormals {
 	    $ny[$j] = $ny[$j] / $d;
 	    $nz[$j] = $nz[$j] / $d;
 	  }
-	    
+
 	}
 }
 
@@ -459,9 +459,9 @@ sub fixedIndex {
 }
 
 sub writeOutput {
-	open ( OUTFILE, ">$outFilename" ) 
+	open ( OUTFILE, ">$outFilename" )
 	  || die "Can't create file $outFilename ... exiting\n";
-	
+
 	print OUTFILE "/*\n";
 	print OUTFILE "created with obj2opengl.pl\n\n";
 
@@ -472,7 +472,7 @@ sub writeOutput {
 	print OUTFILE "normals        : $numNormals\n";
 	print OUTFILE "texture coords : $numTexture\n";
 	print OUTFILE "\n\n";
-	
+
 	# example usage
 	print OUTFILE "// include generated arrays\n";
 	print OUTFILE "#import \"".$outFilename."\"\n";
@@ -487,12 +487,12 @@ sub writeOutput {
 	print OUTFILE "// draw data\n";
 	print OUTFILE "glDrawArrays(GL_TRIANGLES, 0, ".$object."NumVerts);\n";
 	print OUTFILE "*/\n\n";
-	
+
 	# needed constant for glDrawArrays
 	print OUTFILE "unsigned int ".$object."NumVerts = ".($numFaces * 3).";\n\n";
-	
+
 	# write verts
-	print OUTFILE "float ".$object."Verts \[\] = {\n"; 
+	print OUTFILE "float ".$object."Verts \[\] = {\n";
 	for( $j = 0; $j < $numFaces; $j++)
 	{
 		$ia = fixedIndex($va_idx[$j], $numVerts);
@@ -504,10 +504,10 @@ sub writeOutput {
 		print OUTFILE "  $xcoords[$ic], $ycoords[$ic], $zcoords[$ic],\n";
 	}
 	print OUTFILE "};\n\n";
-	
+
 	# write normals
 	if($numNormals > 0) {
-		print OUTFILE "float ".$object."Normals \[\] = {\n"; 
+		print OUTFILE "float ".$object."Normals \[\] = {\n";
 		for( $j = 0; $j < $numFaces; $j++) {
 			$ia = fixedIndex($na_idx[$j], $numNormals);
 			$ib = fixedIndex($nb_idx[$j], $numNormals);
@@ -517,13 +517,13 @@ sub writeOutput {
 			print OUTFILE "  $nx[$ib], $ny[$ib], $nz[$ib],\n";
 			print OUTFILE "  $nx[$ic], $ny[$ic], $nz[$ic],\n";
 		}
-		
+
 		print OUTFILE "};\n\n";
 	}
-	
+
 	# write texture coords
 	if($numTexture) {
-		print OUTFILE "float ".$object."TexCoords \[\] = {\n"; 
+		print OUTFILE "float ".$object."TexCoords \[\] = {\n";
 		for( $j = 0; $j < $numFaces; $j++) {
 			$ia = fixedIndex($ta_idx[$j], $numTexture);
 			$ib = fixedIndex($tb_idx[$j], $numTexture);
@@ -533,10 +533,10 @@ sub writeOutput {
 			print OUTFILE "  $tx[$ib], $ty[$ib],\n";
 			print OUTFILE "  $tx[$ic], $ty[$ic],\n";
 		}
-		
+
 		print OUTFILE "};\n\n";
 	}
-	
+
 	close OUTFILE;
 }
 
