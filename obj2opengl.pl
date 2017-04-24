@@ -371,9 +371,9 @@ sub loadData {
 	  	$vc_idx[$numFaces] = $c[0]-1;
 	  	$tc_idx[$numFaces] = $c[1]-1;
 	  	$nc_idx[$numFaces] = $c[2]-1;
-	  
+
 	  	$face_line[$numFaces] = $line;
-	  
+
 		$numFaces++;
 
 		# ractangle => second triangle
