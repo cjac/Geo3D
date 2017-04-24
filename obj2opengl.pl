@@ -8,7 +8,7 @@
 
  obj2opengl [options] file
 
- use -help or -man for further information
+ use --help or --man for further information
 
 =head1 DESCRIPTION
 
@@ -55,40 +55,40 @@ to this () specification.
 
 =over
 
-=item B<-help>
+=item B<--help>
 
 Print a brief help message and exits.
 
-=item B<-man>
+=item B<--man>
 
 Prints the extended manual page and exits.
 
-=item B<-noScale>
+=item B<--noScale>
 
 Prevents automatic scaling. Otherwise the object will be scaled
 such the the longest dimension is 1 unit.
 
-=item B<-scale <float>>
+=item B<--scale <float>>
 
 Sets the scale factor explicitly. Please be aware that negative numbers
 are not handled correctly regarding the orientation of the normals.
 
-=item B<-noMove>
+=item B<--noMove>
 
 Prevents automatic scaling. Otherwise the object will be moved to the center of
 its vertices.
 
-=item B<-o>, B<-outputFilename>
+=item B<-o>, B<--outputFilename>
 
 Name of the output file name. If omitted, the output file the same as the
 input filename but with the extension .h
 
-=item B<-nameOfObject>
+=item B<--nameOfObject>
 
 Specifies the name of the generated variables. If omitted, same as
 output filename without path and extension.
 
-=item B<-noverbose>
+=item B<--noverbose>
 
 Runs this script silently.
 
