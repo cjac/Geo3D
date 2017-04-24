@@ -1,5 +1,7 @@
 #! /usr/bin/perl -w
 
+use strict;
+
 =head1 NAME
 
  obj2opengl - converts obj files to arrays for glDrawArrays
@@ -99,6 +101,28 @@ use File::Basename;
 use Pod::Usage;
 
 # -----------------------------------------------------------------
+# Global Variables
+# -----------------------------------------------------------------
+
+my( $verbose,
+    @center, $xcen, $ycen, $zcen,
+    $errorInOptions,
+    $scalefac,
+    $inFilename,
+    $outFilename,
+    $object,
+    @xcoords,@ycoords,@zcoords,
+    @tx,@ty,@tz,
+    @nx,@ny,@nz,
+    @va_idx,@ta_idx,@na_idx,
+    @vb_idx,@tb_idx,@nb_idx,
+    @vc_idx,@tc_idx,@nc_idx,
+    @face_line,
+  );
+
+my( $numVerts, $numFaces, $numTexture, $numNormals ) = (0,0,0,0);
+
+# -----------------------------------------------------------------
 # Sub Routines
 # -----------------------------------------------------------------
 
@@ -108,38 +132,32 @@ sub handleArguments() {
 	my $noscale = 0;
 	my $nomove = 0;
 	$verbose = 1;
-	$errorInOptions = !GetOptions (
-		"help" => \$help,
-		"man"  => \$man,
-		"noScale" => \$noscale,
-		"scale=f" => \$scalefac,
-		"noMove" => \$nomove,
-		"center=f{3}" => \@center,
-		"outputFilename=s" => \$outFilename,
-		"nameOfObject=s" => \$object,
-		"verbose!" => \$verbose,
-		);
+  my $options_result =
+    GetOptions (
+                "help" => \$help,
+                "man"  => \$man,
+                "noScale" => \$noscale,
+                "scale=f" => \$scalefac,
+                "noMove" => \$nomove,
+                "center=f{3}" => \@center,
+                "outputFilename=s" => \$outFilename,
+                "nameOfObject=s" => \$object,
+                "verbose!" => \$verbose,
+               );
+	$errorInOptions = 1 unless $options_result;
 
-	if($noscale) {
-		$scalefac = 1;
-	}
+	$scalefac = 1 if $noscale;
 
-	if($nomove) {
-		@center = (0, 0, 0);
-	}
+	@center = (0, 0, 0) if $nomove;
 
-	if(@center) {
-		$xcen = $center[0];
-		$ycen = $center[1];
-		$zcen = $center[2];
-	}
+	($xcen,$ycen,$zcen) = @center;
 
-	if($#ARGV == 0) {
-		my ($file, $dir, $ext) = fileparse($ARGV[0], qr/\.[^.]*/);
-		$inFilename = $dir . $file . $ext;
-	} else {
-		$errorInOptions = 1;
-	}
+  if($#ARGV == 0) {
+    my ($file, $dir, $ext) = fileparse($ARGV[0], qr/\.[^.]*/);
+    $inFilename = $dir . $file . $ext;
+  } else {
+    $errorInOptions = 1;
+  }
 
 	# (optional) derive output filename from input filename
 	unless($errorInOptions || defined($outFilename)) {
@@ -150,7 +168,7 @@ sub handleArguments() {
 	# (optional) define object name from output filename
 	unless($errorInOptions || defined($object)) {
 		my ($file, $dir, $ext) = fileparse($outFilename, qr/\.[^.]*/);
-	  	$object = $file;
+    $object = $file;
 	}
 
 	($inFilename ne $outFilename) or
@@ -184,7 +202,7 @@ sub calcSizeAndCenter() {
 		$xmax, $ymax, $zmax,
 		);
 
-	while ( $line = <$fh> )
+	while ( my $line = <$fh> )
 	{
 	  chop $line;
 
@@ -192,7 +210,7 @@ sub calcSizeAndCenter() {
 	  {
 
 	    $numVerts++;
-	    @tokens = split(' ', $line);
+	    my @tokens = split(' ', $line);
 
 	    $xsum += $tokens[1];
 	    $ysum += $tokens[2];
@@ -288,6 +306,79 @@ sub printStatistics() {
 	print "Normals        : $numNormals\n";
 }
 
+my $rx =
+  {
+   vertex  => qr/v\s+.*/,
+   texture_coord => qr/vt\s+.*/,
+   normal  => qr/vn\s+.*/,
+   face    => qr/(?:^f|\G)\s+([^ ]+)/,
+  };
+
+
+sub parse_vertex {
+  my( $line ) = @_;
+  my( $v, @token ) = split(' ', $line);
+
+  my $x = ( $token[0] - $xcen ) * $scalefac;
+  my $y = ( $token[1] - $ycen ) * $scalefac;
+  my $z = ( $token[2] - $zcen ) * $scalefac;
+
+  ($xcoords[$numVerts],
+   $ycoords[$numVerts],
+   $zcoords[$numVerts]) = ( $x, $y, $z );
+
+  $numVerts++;
+}
+
+sub parse_texture_coord {
+  my @tokens = split(' ', $_[0]);
+
+  ($tx[$numTexture],
+   $ty[$numTexture]) = ($tokens[1], 1 - $tokens[2]);
+
+  $numTexture++;
+}
+
+sub parse_normal {
+  my ($line) = @_;
+  my $vn;
+  ($vn,
+   $nx[$numNormals],
+   $ny[$numNormals],
+   $nz[$numNormals]) = split(' ', $_[0]);
+
+  $numNormals++;
+}
+
+sub define_triangle {
+  my($line, $faceNum, @vert) = @_;
+
+  $va_idx[$faceNum] = $vert[0]->[0]-1;
+  $ta_idx[$faceNum] = $vert[0]->[1]-1;
+  $na_idx[$faceNum] = $vert[0]->[2]-1;
+
+  $vb_idx[$faceNum] = $vert[1]->[0]-1;
+  $tb_idx[$faceNum] = $vert[1]->[1]-1;
+  $nb_idx[$faceNum] = $vert[1]->[2]-1;
+
+  $vc_idx[$faceNum] = $vert[2]->[0]-1;
+  $tc_idx[$faceNum] = $vert[2]->[1]-1;
+  $nc_idx[$faceNum] = $vert[2]->[2]-1;
+
+  $face_line[$faceNum] = $line;
+}
+
+sub parse_face {
+  my( $line ) = @_;
+  my( @vert ) = map { [ split('/', $_) ] } ( $line =~ /$rx->{face}/g );
+  define_triangle($line, $numFaces++, @vert[0,1,2]);
+
+  # ractangle => second triangle
+  if(exists $vert[3]) {
+    define_triangle($line, $numFaces++, @vert[0,3,2]);
+  }
+}
+
 # reads vertices into $xcoords[], $ycoords[], $zcoords[]
 #   where coordinates are moved and scaled according to
 #   $xcen, $ycen, $zcen and $scalefac
@@ -299,114 +390,45 @@ sub printStatistics() {
 #   va_idx[], vb_idx[], vc_idx[] for vertices
 #   ta_idx[], tb_idx[], tc_idx[] for texture coords
 #   na_idx[], nb_idx[], nc_idx[] for normals
-#   store indizes for the former arrays respectively
+#   store indices for the former arrays respectively
 #   also, $face_line[] store actual face string
 sub loadData {
-	$numVerts = 0;
-	$numFaces = 0;
-	$numTexture = 0;
-	$numNormals = 0;
+  ( $numVerts, $numFaces, $numTexture, $numNormals ) = (0,0,0,0);
 
 	open ( my $fh, q{<}, $inFilename )
 	  || die "Can't find file $inFilename...exiting \n";
 
-	while ($line = <$fh>)
-	{
-	  chop $line;
+	while (my $line = <$fh>)	{
+	  chomp $line;
 
 	  # vertices
-	  if ($line =~ /v\s+.*/)
-	  {
-	    @tokens= split(' ', $line);
-	    $x = ( $tokens[1] - $xcen ) * $scalefac;
-	    $y = ( $tokens[2] - $ycen ) * $scalefac;
-	    $z = ( $tokens[3] - $zcen ) * $scalefac;
-	    $xcoords[$numVerts] = $x;
-	    $ycoords[$numVerts] = $y;
-	    $zcoords[$numVerts] = $z;
-
-	    $numVerts++;
+	  if ($line =~ $rx->{vertex}){
+      parse_vertex($line);
 	  }
 
 	  # texture coords
-	  if ($line =~ /vt\s+.*/)
-	  {
-	    @tokens= split(' ', $line);
-	    $x = $tokens[1];
-	    $y = 1 - $tokens[2];
-	    $tx[$numTexture] = $x;
-	    $ty[$numTexture] = $y;
-
-	    $numTexture++;
+	  elsif ($line =~ $rx->{texture_coord}){
+      parse_texture_coord($line);
 	  }
 
 	  #normals
-	  if ($line =~ /vn\s+.*/)
-	  {
-	    @tokens= split(' ', $line);
-	    $x = $tokens[1];
-	    $y = $tokens[2];
-	    $z = $tokens[3];
-	    $nx[$numNormals] = $x;
-	    $ny[$numNormals] = $y;
-	    $nz[$numNormals] = $z;
-
-	    $numNormals++;
+	  elsif ($line =~ $rx->{normal}){
+      parse_normal( $line );
 	  }
 
 	  # faces
-	  if ($line =~ /f\s+([^ ]+)\s+([^ ]+)\s+([^ ]+)(\s+([^ ]+))?/)
-	  {
-	  	@a = split('/', $1);
-	  	@b = split('/', $2);
-	  	@c = split('/', $3);
-	  	$va_idx[$numFaces] = $a[0]-1;
-	  	$ta_idx[$numFaces] = $a[1]-1;
-	  	$na_idx[$numFaces] = $a[2]-1;
-
-	  	$vb_idx[$numFaces] = $b[0]-1;
-	  	$tb_idx[$numFaces] = $b[1]-1;
-	  	$nb_idx[$numFaces] = $b[2]-1;
-
-	  	$vc_idx[$numFaces] = $c[0]-1;
-	  	$tc_idx[$numFaces] = $c[1]-1;
-	  	$nc_idx[$numFaces] = $c[2]-1;
-
-	  	$face_line[$numFaces] = $line;
-
-		$numFaces++;
-
-		# ractangle => second triangle
-		if(defined $5 && $5 != "")
-		{
-			@d = split('/', $5);
-			$va_idx[$numFaces] = $a[0]-1;
-			$ta_idx[$numFaces] = $a[1]-1;
-			$na_idx[$numFaces] = $a[2]-1;
-
-			$vb_idx[$numFaces] = $d[0]-1;
-			$tb_idx[$numFaces] = $d[1]-1;
-			$nb_idx[$numFaces] = $d[2]-1;
-
-			$vc_idx[$numFaces] = $c[0]-1;
-			$tc_idx[$numFaces] = $c[1]-1;
-			$nc_idx[$numFaces] = $c[2]-1;
-
-			$face_line[$numFaces] = $line;
-
-			$numFaces++;
-		}
-
-	  }
-	}
+	  elsif ($line =~ $rx->{face}){
+      parse_face($line);
+    }
+  }
 
 	close $fh;
 }
 
 sub normalizeNormals {
-	for ( $j = 0; $j < $numNormals; ++$j)
+	for ( my $j = 0; $j < $numNormals; ++$j)
 	{
-	 $d = sqrt ( $nx[$j]*$nx[$j] + $ny[$j]*$ny[$j] + $nz[$j]*$nz[$j] );
+	  my $d = sqrt ( $nx[$j]*$nx[$j] + $ny[$j]*$ny[$j] + $nz[$j]*$nz[$j] );
 
 	  if ( $d == 0 )
 	  {
@@ -425,8 +447,8 @@ sub normalizeNormals {
 }
 
 sub fixedIndex {
-    local $idx = $_[0];
-    local $num = $_[1];
+    my $idx = $_[0];
+    my $num = $_[1];
     if($idx >= 0)
     {
         $idx;
@@ -470,11 +492,11 @@ sub writeOutput {
 
 	# write verts
 	print OUTFILE "float ".$object."Verts \[\] = {\n";
-	for( $j = 0; $j < $numFaces; $j++)
+	for( my $j = 0; $j < $numFaces; $j++)
 	{
-		$ia = fixedIndex($va_idx[$j], $numVerts);
-		$ib = fixedIndex($vb_idx[$j], $numVerts);
-		$ic = fixedIndex($vc_idx[$j], $numVerts);
+		my $ia = fixedIndex($va_idx[$j], $numVerts);
+		my $ib = fixedIndex($vb_idx[$j], $numVerts);
+		my $ic = fixedIndex($vc_idx[$j], $numVerts);
 		print OUTFILE "  // $face_line[$j]\n";
 		print OUTFILE "  $xcoords[$ia], $ycoords[$ia], $zcoords[$ia],\n";
 		print OUTFILE "  $xcoords[$ib], $ycoords[$ib], $zcoords[$ib],\n";
@@ -485,10 +507,10 @@ sub writeOutput {
 	# write normals
 	if($numNormals > 0) {
 		print OUTFILE "float ".$object."Normals \[\] = {\n";
-		for( $j = 0; $j < $numFaces; $j++) {
-			$ia = fixedIndex($na_idx[$j], $numNormals);
-			$ib = fixedIndex($nb_idx[$j], $numNormals);
-			$ic = fixedIndex($nc_idx[$j], $numNormals);
+		for( my $j = 0; $j < $numFaces; $j++) {
+			my $ia = fixedIndex($na_idx[$j], $numNormals);
+			my $ib = fixedIndex($nb_idx[$j], $numNormals);
+			my $ic = fixedIndex($nc_idx[$j], $numNormals);
 			print OUTFILE "  // $face_line[$j]\n";
 			print OUTFILE "  $nx[$ia], $ny[$ia], $nz[$ia],\n";
 			print OUTFILE "  $nx[$ib], $ny[$ib], $nz[$ib],\n";
@@ -501,10 +523,10 @@ sub writeOutput {
 	# write texture coords
 	if($numTexture) {
 		print OUTFILE "float ".$object."TexCoords \[\] = {\n";
-		for( $j = 0; $j < $numFaces; $j++) {
-			$ia = fixedIndex($ta_idx[$j], $numTexture);
-			$ib = fixedIndex($tb_idx[$j], $numTexture);
-			$ic = fixedIndex($tc_idx[$j], $numTexture);
+		for( my $j = 0; $j < $numFaces; $j++) {
+			my $ia = fixedIndex($ta_idx[$j], $numTexture);
+			my $ib = fixedIndex($tb_idx[$j], $numTexture);
+			my $ic = fixedIndex($tc_idx[$j], $numTexture);
 			print OUTFILE "  // $face_line[$j]\n";
 			print OUTFILE "  $tx[$ia], $ty[$ia],\n";
 			print OUTFILE "  $tx[$ib], $ty[$ib],\n";
