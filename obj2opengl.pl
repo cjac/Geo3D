@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -w
 
 =head1 NAME
 
@@ -99,30 +99,6 @@ use File::Basename;
 use Pod::Usage;
 
 # -----------------------------------------------------------------
-# Main Program
-# -----------------------------------------------------------------
-handleArguments();
-
-# derive center coords and scale factor if neither provided nor disabled
-unless(defined($scalefac) && defined($xcen)) {
-	calcSizeAndCenter();
-}
-
-if($verbose) {
-	printInputAndOptions();
-}
-
-# TODO check integrity: Does every referenced vertex, normal and coord exist?
-loadData();
-normalizeNormals();
-
-if($verbose) {
-	printStatistics();
-}
-
-writeOutput();
-
-# -----------------------------------------------------------------
 # Sub Routines
 # -----------------------------------------------------------------
 
@@ -162,7 +138,7 @@ sub handleArguments() {
 		my ($file, $dir, $ext) = fileparse($ARGV[0], qr/\.[^.]*/);
 		$inFilename = $dir . $file . $ext;
 	} else {
-		$errorInOptions = true;
+		$errorInOptions = 1;
 	}
 
 	# (optional) derive output filename from input filename
@@ -541,3 +517,26 @@ sub writeOutput {
 	close OUTFILE;
 }
 
+# -----------------------------------------------------------------
+# Main Program
+# -----------------------------------------------------------------
+handleArguments();
+
+# derive center coords and scale factor if neither provided nor disabled
+unless(defined($scalefac) && defined($xcen)) {
+	calcSizeAndCenter();
+}
+
+if($verbose) {
+	printInputAndOptions();
+}
+
+# TODO check integrity: Does every referenced vertex, normal and coord exist?
+loadData();
+normalizeNormals();
+
+if($verbose) {
+	printStatistics();
+}
+
+writeOutput();
