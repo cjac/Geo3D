@@ -164,16 +164,16 @@ sub handleArguments() {
 	}
 
 	# check wheter file exists
-	open ( INFILE, "<$inFilename" )
+	open ( my $fh, q{<}, $inFilename )
 	  || die "Can't find file '$inFilename' ...exiting \n";
-	close(INFILE);
+	close($fh);
 }
 
 # Stores center of object in $xcen, $ycen, $zcen
 # and calculates scaling factor $scalefac to limit max
 #   side of object to 1.0 units
 sub calcSizeAndCenter() {
-	open ( INFILE, "<$inFilename" )
+	open ( my $fh, q{<}, $inFilename )
 	  || die "Can't find file $inFilename...exiting \n";
 
 	$numVerts = 0;
@@ -184,7 +184,7 @@ sub calcSizeAndCenter() {
 		$xmax, $ymax, $zmax,
 		);
 
-	while ( $line = <INFILE> )
+	while ( $line = <$fh> )
 	{
 	  chop $line;
 
@@ -241,7 +241,7 @@ sub calcSizeAndCenter() {
 	  }
 
 	}
-	close INFILE;
+	close $fh;
 
 	#  Calculate the center
 	unless(defined($xcen)) {
@@ -307,10 +307,10 @@ sub loadData {
 	$numTexture = 0;
 	$numNormals = 0;
 
-	open ( INFILE, "<$inFilename" )
+	open ( my $fh, q{<}, $inFilename )
 	  || die "Can't find file $inFilename...exiting \n";
 
-	while ($line = <INFILE>)
+	while ($line = <$fh>)
 	{
 	  chop $line;
 
@@ -400,7 +400,7 @@ sub loadData {
 	  }
 	}
 
-	close INFILE;
+	close $fh;
 }
 
 sub normalizeNormals {
