@@ -5,6 +5,8 @@ use strict;
 use warnings;
 use Moose;
 use Geo3D::Polygon;
+use Types::Standard qw(ArrayRef InstanceOf);
+use Type::Utils qw(subtype where as);
 
 extends 'Geo3D::Polygon';
 
@@ -38,10 +40,12 @@ our $VERSION = '0.01';
 
 =cut
 
-has '+vertex_list' => ( where => {
-                                  defined $_ &&
-                                  scalar @$_ == 3 }
-                      );
+has '+vertex_list' => ( isa => (subtype as InstanceOf['Geo3D::VertexList'],
+                                where { scalar @{ $_->vertices } == 3 }) );
+
+=head1 ACKNOWLEDGEMENTS
+
+Thanks to mst for assistance with semi-simple type constraints
 
 =head1 AUTHOR
 
