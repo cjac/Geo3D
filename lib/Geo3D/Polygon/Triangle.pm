@@ -5,6 +5,8 @@ use strict;
 use warnings;
 use Moose;
 use Geo3D::Polygon;
+use Types::Standard qw(ArrayRef InstanceOf);
+use Type::Utils qw(subtype where);
 
 extends 'Geo3D::Polygon';
 
@@ -38,10 +40,7 @@ our $VERSION = '0.01';
 
 =cut
 
-has '+vertex_list' => ( where => {
-                                  defined $_ &&
-                                  scalar @$_ == 3 }
-                      );
+has '+vertex_list' => ( isa => (subtype ArrayRef[InstanceOf['Geo3D::Vertex']], where { scalar @$_ == 3 }) );
 
 =head1 AUTHOR
 
