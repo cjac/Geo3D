@@ -3,10 +3,12 @@ package Geo3D::Polygon;
 use 5.006;
 use strict;
 use warnings;
+use Moose;
+use Geo3D::VertexList;
 
 =head1 NAME
 
-Geo3D::Polygon - The great new Geo3D::Polygon!
+Geo3D::Polygon - A base class to represent polygons
 
 =head1 VERSION
 
@@ -19,34 +21,37 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
     use Geo3D::Polygon;
 
-    my $foo = Geo3D::Polygon->new();
-    ...
-
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+    my $vl = Geo3D::VertexList->new( vertices => [ ... ] );
+    my $p  = Geo3D::Polygon->new( vertex_list => $vl );
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
-sub function1 {
-}
-
-=head2 function2
+=head2 vertex_list
 
 =cut
 
-sub function2 {
+has 'vertex_list' => ( is => 'rw',
+                       isa => 'Geo3D::VertexList'
+                     );
+
+=head2 vertex_count
+
+=cut
+
+has 'vertex_count' => ( is => 'ro',
+                        isa => 'Num',
+                        lazy    => 1,
+                        builder => '_build_vertex_count',
+                      );
+
+sub _build_vertex_count {
+  scalar @{ $_[0]->vertex_list->vertices };
 }
 
 =head1 AUTHOR

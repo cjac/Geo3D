@@ -1,12 +1,13 @@
-package Geo3D::Vertex;
+package Geo3D::VertexList;
 
 use Moose;
+use Geo3D::Vertex;
 
 use 5.006;
 
 =head1 NAME
 
-Geo3D::Vertex - Representation of a 3D vertex
+Geo3D::VertexList - Representation of a list of 3D vertices
 
 =head1 VERSION
 
@@ -16,46 +17,25 @@ Version 0.01
 
 our $VERSION = '0.01';
 
-
 =head1 SYNOPSIS
 
-    use Geo3D::Vertex;
+    use Geo3D::VertexList;
 
-    my $v = Geo3D::Vertex->new( x => 1, y => 2, z => 3 );
+    my( @vertex ) = ( Geo3D::Vertex->new( x => 1, y => 2, z => 3 ),
+                      Geo3D::Vertex->new( x => 2, y => 3, z => 4 ),
+                      Geo3D::Vertex->new( x => 4, y => 5, z => 6 ),
+                      );
+
+    my $vertexList = Geo3D::VertexList->new( vertices => \@vertex );
 
 =head1 SUBROUTINES/METHODS
 
-=head2 x
+=head2 name
 
-  Set / get the X value
-
-=head2 y
-
-  Set / get the Y value
-
-=head2 z
-
-  Set / get the Z value
 
 =cut
 
-has 'x' => (is => 'rw', isa => 'Num');
-has 'y' => (is => 'rw', isa => 'Num');
-has 'z' => (is => 'rw', isa => 'Num');
-
-=head2 clear
-
-  re-set the vertex to 0,0,0
-
-=cut
-
-
-sub clear {
-  my $self = shift;
-  $self->x(0);
-  $self->y(0);
-  $self->z(0);
-}
+has 'vertices' => (is => 'rw', isa => 'ArrayRef[Geo3D::Vertex]');
 
 =head1 AUTHOR
 
@@ -72,7 +52,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Geo3D::Vertex
+    perldoc Geo3D::VertexList
 
 You can also look for information at:
 
@@ -113,4 +93,5 @@ See L<http://dev.perl.org/licenses/> for more information.
 
 =cut
 
-1; # End of Geo3D::Vertex
+1; # End of Geo3D::VertexList
+

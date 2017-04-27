@@ -1,12 +1,16 @@
-package Geo3D::Vertex;
-
-use Moose;
+package Geo3D::Polygon::Triangle;
 
 use 5.006;
+use strict;
+use warnings;
+use Moose;
+use Geo3D::Polygon;
+
+extends 'Geo3D::Polygon';
 
 =head1 NAME
 
-Geo3D::Vertex - Representation of a 3D vertex
+Geo3D::Polygon::Triangle - A class to represent Triangle polygons
 
 =head1 VERSION
 
@@ -19,43 +23,25 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-    use Geo3D::Vertex;
+    use Geo3D::Triangle;
 
-    my $v = Geo3D::Vertex->new( x => 1, y => 2, z => 3 );
+    my $vl = Geo3D::VertexList->new( vertices => [ ... ] );
+    my $p  = Geo3D::Polygon->new( vertex_list => $vl );
 
 =head1 SUBROUTINES/METHODS
 
-=head2 x
-
-  Set / get the X value
-
-=head2 y
-
-  Set / get the Y value
-
-=head2 z
-
-  Set / get the Z value
+=head2 new
 
 =cut
 
-has 'x' => (is => 'rw', isa => 'Num');
-has 'y' => (is => 'rw', isa => 'Num');
-has 'z' => (is => 'rw', isa => 'Num');
-
-=head2 clear
-
-  re-set the vertex to 0,0,0
+=head2 vertex_list
 
 =cut
 
-
-sub clear {
-  my $self = shift;
-  $self->x(0);
-  $self->y(0);
-  $self->z(0);
-}
+has '+vertex_list' => ( where => {
+                                  defined $_ &&
+                                  scalar @$_ == 3 }
+                      );
 
 =head1 AUTHOR
 
@@ -68,11 +54,14 @@ the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Geo3D>.  I
 automatically be notified of progress on your bug as I make changes.
 
 
+
+
 =head1 SUPPORT
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Geo3D::Vertex
+    perldoc Geo3D::Polygon
+
 
 You can also look for information at:
 
@@ -113,4 +102,4 @@ See L<http://dev.perl.org/licenses/> for more information.
 
 =cut
 
-1; # End of Geo3D::Vertex
+1; # End of Geo3D::Polygon
